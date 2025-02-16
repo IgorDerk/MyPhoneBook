@@ -1,9 +1,6 @@
 package PhoneBook;
 
-import org.openqa.selenium.Alert;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -12,8 +9,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.time.Duration;
+import java.util.List;
 
 public class TestBase {
+    public static final String CONTACT_LOCATOR = "contact-item_card__2SOIM";
+    public static final String CONTACT_NAME = "Name";
     WebDriver driver;
 
     @BeforeMethod
@@ -24,7 +24,7 @@ public class TestBase {
         driver.manage().window().maximize(); // На весь экран развернуть браузер
         // Неявное ожидание локатора. Если элемент появится до истечения времени, Selenium сразу продолжит выполнение, не дожидаясь окончания таймера.
         // Устанавливает глобальное ожидание на все элементы, которые вы пытаетесь найти с помощью методов findElement или findElements
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
     }
 
     @AfterMethod(enabled = false) // включение или отключения закрытия браузера после тестов
@@ -86,5 +86,48 @@ public class TestBase {
         typeEmail(email);
         typePassword(password);
         clickOnLoginButton();
+    }
+
+    protected void addContactPositiveData(String name) {
+        click(By.xpath("//a[.='ADD']"));
+        type(By.xpath("//input[@placeholder='Name']"), name);
+        type(By.xpath("//input[@placeholder='Last Name']"), "LastName");
+        type(By.xpath("//input[@placeholder='Phone']"), "1234567890");
+        type(By.xpath("//input[@placeholder='email']"), "example@gmail.com");
+        type(By.xpath("//input[@placeholder='Address']"), "Germany, Rostock");
+        type(By.xpath("//input[@placeholder='description']"), "My Contact Test");
+        click(By.xpath("//b[.='Save']"));
+    }
+
+    public int getContactsCount() {
+        if (isElementPresent(By.className(CONTACT_LOCATOR))) {
+            return driver.findElements(By.className(CONTACT_LOCATOR)).size();
+        }
+        return 0;
+    }
+
+    protected boolean isContactAdded(String textToFind) {
+        List<WebElement> contacts = driver.findElements(By.className(CONTACT_LOCATOR));
+        for (WebElement element : contacts){
+            if(element.getText().contains(textToFind));
+            return true;
+        }
+        return false;
+    }
+
+    protected void clickAndDeleteOneContact() {
+        click(By.className(CONTACT_LOCATOR));
+        click(By.xpath("//button[.='Remove']"));
+    }
+
+    protected boolean hasContacts() {
+        return isElementPresent(By.className(CONTACT_LOCATOR));
+    }
+
+    protected void deleteFirstContact() {
+        int contactsBefore = getContactsCount();
+        clickAndDeleteOneContact();
+        new WebDriverWait(driver, Duration.ofSeconds(2))
+                .until(ExpectedConditions.numberOfElementsToBe(By.className(CONTACT_LOCATOR), contactsBefore - 1));
     }
 }
